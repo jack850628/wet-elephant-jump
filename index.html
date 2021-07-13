@@ -88,7 +88,7 @@
             draw(dt){
                 // fill(this.color.r, this.color.g, this.color.b);
                 image(this.heads[this.headIndex], this.x - 5, this.y - 15, this.width + 10, this.height * 0.33 + 15);
-                image(this.bodys[parseInt((this.dt += dt) % 6)] ,this.x, this.y + this.height * 0.33, this.width, this.height * 0.66);
+                image(this.bodys[parseInt((this.dt += dt) % this.bodys.length)] ,this.x, this.y + this.height * 0.33, this.width, this.height * 0.66);
                 // image(this.images[parseInt((this.dt += dt) % 6)], this.x, this.y, this.width, this.height);
             }
         }
