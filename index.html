@@ -1,0 +1,304 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跳躍吧！元元！</title>
+    <style>
+        body{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.js"></script>
+    <script>
+        const TOP = 460, JUMP_TIME = 1;
+        const LEFT = 0, RIGHT = 1300, MAX_BEAST = 1, BEAST_WIDTH = 45;
+        const BOTTOM = 620;
+        const MOVE_SEC_A = 0.03;
+        const BOTTOM_BLOCK_SIZE = 40;
+        const GAME_STATE = {
+            STOP: 0,
+            RUNING: 1,
+            RELOADING: 2
+        }
+
+        const START_SOUND = './sound/诶嘿～.mp3';
+        const ADD_POINT = './sound/やりますねぇ.mp3'
+        const JUMP_SOUND = [
+            './sound/哈↘！.mp3',
+            './sound/賀↘！.mp3',
+            './sound/輝！！.mp3',
+            './sound/輝！.mp3'
+        ];
+        const OVER_SOUND = [
+            './sound/啊～哈.mp3',
+            './sound/啊➚～～.mp3',
+            './sound/啊➚～～2.mp3',
+            './sound/啊～➚3.mp3',
+            './sound/嗚啊～.mp3',
+            './sound/嗚啊↘～～.mp3'
+        ];
+        
+        const WET_ELEPHANT_BODY = [
+            './image/兆元1.png',
+            './image/兆元2.png',
+            './image/兆元3.png',
+            './image/兆元4.png',
+            './image/兆元5.png',
+            './image/兆元6.png',
+        ];
+        const WET_ELEPHANT_HEAD = [
+            './image/兆元192.png',
+            './image/兆元192_2.png'
+        ];
+        const BEAST_HEAD = './image/野獸先輩.png', BEAST_HEAD_HEIGHT = 45;
+        const BEAST_HEAD_HEIGHT_LIST = [
+            BEAST_HEAD_HEIGHT,
+            BEAST_HEAD_HEIGHT * 2,
+            BEAST_HEAD_HEIGHT * 3,
+            BEAST_HEAD_HEIGHT * 4
+        ]
+
+        var gameState = GAME_STATE.STOP;
+        
+
+        var cactusQueue = [];
+        var moveLengthCoume;
+        var p, box, gameBax, soundPlayer = new Audio();
+        var sec;
+        var t;
+        var moveSec;
+        var bottomBlocks = [];
+        var point;
+
+        class WetElephant{
+            constructor(x, y, width, height, color){
+                this.x = x;
+                this.y = y;
+                this.height = height;
+                this.width = width;
+                this.color = color;
+                this.heads = WET_ELEPHANT_HEAD.map(i => loadImage(i));
+                this.bodys = WET_ELEPHANT_BODY.map(i => loadImage(i));
+                this.dt = 0;
+                this.headIndex = 0;
+            }
+            draw(dt){
+                // fill(this.color.r, this.color.g, this.color.b);
+                image(this.heads[this.headIndex], this.x - 5, this.y - 15, this.width + 10, this.height * 0.33 + 15);
+                image(this.bodys[parseInt((this.dt += dt) % 6)] ,this.x, this.y + this.height * 0.33, this.width, this.height * 0.66);
+                // image(this.images[parseInt((this.dt += dt) % 6)], this.x, this.y, this.width, this.height);
+            }
+        }
+        class Floor{
+            constructor(x, y, width, height, color){
+                this.x = x;
+                this.y = y;
+                this.height = height;
+                this.width = width;
+                this.color = color;
+                this.originX = x
+            }
+            draw(){
+                fill(this.color.r, this.color.g, this.color.b);
+                rect(this.x, this.y, this.width, this.height);
+            }
+        }
+        class Beast{
+            constructor(x, y, width, height, color){
+                this.x = x;
+                this.y = y;
+                this.height = height;
+                this.width = width;
+                this.color = color;
+                this.head = loadImage(BEAST_HEAD);
+            }
+            draw(){
+                let y = this.y;
+                for(let i of Array(parseInt(this.height / BEAST_HEAD_HEIGHT)).keys()){
+                    image(this.head, this.x, y, this.width, BEAST_HEAD_HEIGHT);
+                    y += BEAST_HEAD_HEIGHT;
+                }
+            }
+        }
+        function jump(time){
+            var y = -((time - JUMP_TIME / 2)**2);
+            y *= 1000;//將函數放大1000倍
+            y += 250;//當跳躍時間只有一秒時，第-0.5秒與0.5秒時的y座標等於-250
+            return y
+        }
+        function onKeypress(e){
+            if(e.code == 'Space'){
+                if(gameState != GAME_STATE.RELOADING){
+                    if(gameState == GAME_STATE.STOP){
+                        reset();
+                        gameState = GAME_STATE.RUNING;
+                        playSubd(START_SOUND);
+                        t = 0;
+                    }else if(t == -1){
+                        playSubd(JUMP_SOUND[parseInt(random(0, JUMP_SOUND.length))]);
+                        t = 0;
+                    }
+                    console.log('跳');
+                }
+            }
+        }
+        function moveAndRemoveBeast(dt, cactusQueue){
+            var distance = moveSec * dt;
+            if(
+                cactusQueue.length > 0
+                &&
+                (
+                    cactusQueue[0].length == 0 
+                    || 
+                    parseInt(cactusQueue[0][cactusQueue[0].length - 1].x) < -BEAST_WIDTH
+                )
+            ){
+                p.innerText = ++point;
+                playSubd(ADD_POINT);
+                cactusQueue.shift();
+            }
+            for(let i of cactusQueue){
+                for(let j of i){
+                    j.x -= distance;
+                }
+            }
+            return distance;
+        }
+        function createBeast(cactusQueue){
+            var beastList = [];
+            var right = RIGHT;
+            for(let i = 0; i < 6; i++){
+                if(parseInt(random(0 ,2))){
+                    right += BEAST_WIDTH;
+                    continue;
+                }
+                let height = BEAST_HEAD_HEIGHT_LIST[parseInt(random(0, BEAST_HEAD_HEIGHT_LIST.length))]
+                let beast = new Beast(right, BOTTOM - height, BEAST_WIDTH, height, {
+                    r: 0,
+                    g: 128,
+                    b: 0
+                });
+                right += BEAST_WIDTH;
+                beast.draw();
+                beastList.push(beast);
+            }
+            cactusQueue.push(beastList)
+        }
+        function collisionCheck(cactusQueue){
+            if(cactusQueue.length > 0)
+                for(let i of cactusQueue[0]){
+                    if(
+                        (box.x < (i.x + i.width) && (box.x + box.width) > i.x)
+                        &&
+                        (box.y + box.height) > i.y
+                    )return true;
+                }
+            return false;
+        }
+        function random(start, end){
+            var height = end - start;
+            return Math.random() * height + start
+        }
+        function moveBottomBlock(dt, bottomBlock){
+            var distance = moveSec * dt;
+            if(bottomBlock[0].x + distance > -BOTTOM_BLOCK_SIZE){
+                for(let i of bottomBlock){
+                    i.x -= distance;
+                }
+            }else{
+                for(let i of bottomBlock){
+                    i.x = i.originX;
+                }
+            }
+
+        }
+        function reset(){
+            cactusQueue = [];
+            moveLengthCoume = 0;
+            sec = 0;
+            t = -1;
+            moveSec = 420;
+            p.innerText = point = 0;
+            box.headIndex = 0;
+        }
+        function playSubd(url){
+            soundPlayer.src = url;
+            soundPlayer.play();
+        }
+        window.onload = function(){
+            p = document.getElementById('time');
+            
+        }
+        document.addEventListener('keypress', onKeypress);
+
+
+        function setup() {
+            createCanvas(RIGHT, BOTTOM + BOTTOM_BLOCK_SIZE).parent('p5-canvas');
+            box = new WetElephant(15, TOP, 50, 160, {
+                r: 0,
+                g: 0,
+                b: 0
+            });
+            box.draw(0);
+            var blockQuantity = parseInt(RIGHT / BOTTOM_BLOCK_SIZE) + 2
+            for(let x = 0; x < blockQuantity * BOTTOM_BLOCK_SIZE; x += BOTTOM_BLOCK_SIZE){
+                let b = new Floor(x, BOTTOM, BOTTOM_BLOCK_SIZE, BOTTOM_BLOCK_SIZE, {
+                    r: 255,
+                    g: 204,
+                    b: 0
+                });
+                b.draw();
+                bottomBlocks.push(b);
+            }
+        }
+
+        function draw() {
+            background(220);
+            bottomBlocks.forEach(i => i.draw());
+            cactusQueue.flatMap(i => i).forEach(i => i.draw());
+            if(gameState != GAME_STATE.RUNING) {
+                box.draw(0);
+                fill(0, 0, 0);
+                textSize(32);
+                text('按空白鍵開始', RIGHT / 2 - 32 * 6 / 2, BOTTOM / 2);
+                return;
+            }
+            var dt = deltaTime / 1000;//毫秒轉秒
+            box.draw(deltaTime / 50)
+            
+            if(t != -1){
+                box.y = TOP - parseInt(jump(t));
+                t += dt;
+                if(t > JUMP_TIME){
+                    t = -1;
+                    box.y = TOP;
+                }
+            }
+            moveLengthCoume += moveAndRemoveBeast(dt, cactusQueue);
+            if(moveLengthCoume >= RIGHT / MAX_BEAST){
+                createBeast(cactusQueue);
+                moveLengthCoume = 0;
+            }
+            moveBottomBlock(dt, bottomBlocks);
+            if(collisionCheck(cactusQueue)){
+                console.log('撞');
+                playSubd(OVER_SOUND[parseInt(random(0, OVER_SOUND.length))]);
+                box.headIndex = 1;
+                gameState = GAME_STATE.RELOADING;
+                setTimeout(() => {
+                    gameState = GAME_STATE.STOP;
+                }, 1000);
+            }
+            moveSec += MOVE_SEC_A;
+        }
+    </script>
+</head>
+<body>
+    <span style="font-size: 25px;">得分：<span id="time">0</span></span>
+    <div id="p5-canvas"></div>
+    <span style="font-size: 25px;">按下空白鍵，讓元元越過野獸先輩們吧！</span>
+</body>
+</html>
