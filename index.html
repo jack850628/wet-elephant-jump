@@ -14,7 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.js"></script>
     <script>
         const TOP = 460, JUMP_TIME = 1;
-        const LEFT = 0, RIGHT = 1300, MAX_BEAST = 1, BEAST_WIDTH = 45, BEAST_CREATE_A_TIME = 4;
+        const LEFT = 0, RIGHT = 1300, MAX_BEAST = 1, BEAST_WIDTH = 45, MAX_BEAST_CREATE_A_TIME = 8;
         const BOTTOM = 620;
         const MOVE_SEC_A = 0.03;
         const BOTTOM_BLOCK_SIZE = 40;
@@ -24,13 +24,21 @@
             RELOADING: 2
         }
 
-        const START_SOUND = './sound/诶嘿～.mp3';
-        const ADD_POINT = './sound/やりますねぇ.mp3'
+        const START_SOUND = [
+            './sound/诶嘿～.mp3',
+            './sound/轟隆隆隆隆衝衝衝衝拉風.mp3'
+        ];
+        const ADD_POINT = [
+            './sound/やりますねぇ.mp3',
+            './sound/啊呦～.mp3',
+            './sound/唉呦3.mp3'
+        ]
         const JUMP_SOUND = [
             './sound/哈↘！.mp3',
             './sound/賀↘！.mp3',
             './sound/輝！！.mp3',
-            './sound/輝！.mp3'
+            './sound/輝！.mp3',
+            './sound/呼ㄟ.mp3',
         ];
         const OVER_SOUND = [
             './sound/啊～哈.mp3',
@@ -39,9 +47,78 @@
             './sound/啊➚～～2.mp3',
             './sound/啊～➚3.mp3',
             './sound/嗚啊～.mp3',
-            './sound/嗚啊↘～～.mp3'
+            './sound/嗚啊↘～～.mp3',
+            './sound/痾訝～～～.mp3',
+            './sound/痾嗚啊～.mp3'
         ];
         
+        const BACKGROUND = [
+            {
+                url: './image/background1.png',
+                height: 620,
+                width: 1186,
+            },
+            {
+                url: './image/background2.png',
+                height: 620,
+                width: 1026,
+            },
+            {
+                url: './image/background4.png',
+                height: 620,
+                width: 1102,
+            },
+            {
+                url: './image/background5.png',
+                height: 620,
+                width: 912,
+            },
+            {
+                url: './image/background6.png',
+                height: 620,
+                width: 1024,
+            },
+            {
+                url: './image/background7.png',
+                height: 620,
+                width: 784,
+            },
+            {
+                url: './image/background8.png',
+                height: 620,
+                width: 585,
+            },
+            {
+                url: './image/background9.jpg',
+                height: 620,
+                width: 465,
+            },
+            {
+                url: './image/background10.png',
+                height: 620,
+                width: 894,
+            },
+            {
+                url: './image/background11.png',
+                height: 620,
+                width: 998,
+            },
+            {
+                url: './image/background12.png',
+                height: 620,
+                width: 638,
+            },
+            {
+                url: './image/background13.png',
+                height: 620,
+                width: 911,
+            },
+            {
+                url: './image/background3.jpg',
+                height: 620,
+                width: 1024,
+            }
+        ];
         const WET_ELEPHANT_BODY = [
             './image/兆元1.png',
             './image/兆元2.png',
@@ -72,7 +149,9 @@
         var t;
         var moveSec;
         var bottomBlocks = [];
+        var backgroundQueue = [];
         var point;
+        var beastCaeateATime;
 
         class WetElephant{
             constructor(x, y, width, height, color){
@@ -83,15 +162,13 @@
                 this.color = color;
                 this.heads = WET_ELEPHANT_HEAD.map(i => loadImage(i));
                 this.bodys = WET_ELEPHANT_BODY.map(i => loadImage(i));
-                this.dt = 0;
                 this.headIndex = 0;
             }
-            draw(dt){
+            draw(sec){
                 // fill(this.color.r, this.color.g, this.color.b);
-                console.debug(parseInt((this.dt + dt) % this.bodys.length))
                 image(this.heads[this.headIndex], this.x - 5, this.y - 15, this.width + 10, this.height * 0.33 + 15);
-                image(this.bodys[parseInt((this.dt += dt) % this.bodys.length)] ,this.x, this.y + this.height * 0.33, this.width, this.height * 0.66);
-                // image(this.images[parseInt((this.dt += dt) % 6)], this.x, this.y, this.width, this.height);
+                image(this.bodys[parseInt(sec) % WET_ELEPHANT_BODY.length] ,this.x, this.y + this.height * 0.33, this.width, this.height * 0.66);
+                // image(this.images[parseInt(sec) % 6], this.x, this.y, this.width, this.height);
             }
         }
         class Floor{
@@ -125,6 +202,20 @@
                 }
             }
         }
+        class Background{
+            constructor(x, y, width, height, url){
+                this.x = x;
+                this.y = y;
+                this.height = height;
+                this.width = width;
+                this.color = color;
+                this.image = loadImage(url);
+            }
+            draw(){
+                if(this.x < RIGHT)
+                    image(this.image, this.x, this.y, this.width, this.height);
+            }
+        }
         function jump(time){
             var y = -((time - JUMP_TIME / 2)**2);
             y *= 1000;//將函數放大1000倍
@@ -137,7 +228,7 @@
                     if(gameState == GAME_STATE.STOP){
                         reset();
                         gameState = GAME_STATE.RUNING;
-                        playSubd(START_SOUND);
+                        playSubd(START_SOUND[parseInt(random(0, START_SOUND.length))]);
                         t = 0;
                     }else if(t == -1){
                         playSubd(JUMP_SOUND[parseInt(random(0, JUMP_SOUND.length))]);
@@ -154,7 +245,7 @@
                     beastQueue.shift();
                 }else if( parseInt(beastQueue[0][beastQueue[0].length - 1].x) < -BEAST_WIDTH){
                     p.innerText = ++point;
-                    playSubd(ADD_POINT);
+                    playSubd(ADD_POINT[parseInt(random(0, ADD_POINT.length))]);
                     beastQueue.shift();
                 }
             }
@@ -168,7 +259,8 @@
         function createBeast(beastQueue){
             var beastList = [];
             var right = RIGHT;
-            for(let i = 0; i < BEAST_CREATE_A_TIME; i++){
+            var quantity = Math.min(parseInt(beastCaeateATime), MAX_BEAST_CREATE_A_TIME);
+            for(let i = 0; i < quantity; i++){
                 if(parseInt(random(0 ,2))){
                     right += BEAST_WIDTH;
                     continue;
@@ -183,7 +275,7 @@
                 beast.draw();
                 beastList.push(beast);
             }
-            beastQueue.push(beastList)
+            beastQueue.push(beastList);
         }
         function collisionCheck(beastQueue){
             if(beastQueue.length > 0)
@@ -213,14 +305,32 @@
             }
 
         }
+        function movebackground(dt, backgroundQueue){
+            var distance = (moveSec * dt) / 50;
+            for(let i = 0; i < backgroundQueue.length; i++){
+                if(backgroundQueue[i].x + backgroundQueue[i].width <= 0){
+                    let leftItemIndex = (i + backgroundQueue.length - 1) % backgroundQueue.length;
+                    console.log(leftItemIndex);
+                    backgroundQueue[i].x = backgroundQueue[leftItemIndex].x + backgroundQueue[leftItemIndex].width - distance;
+                }else{
+                    backgroundQueue[i].x -= distance;
+                }
+            }
+        }
         function reset(){
             beastQueue = [];
             moveLengthCoume = 0;
             sec = 0;
             t = -1;
             moveSec = 420;
+            beastCaeateATime = 4;
             p.innerText = point = 0;
             box.headIndex = 0;
+            let x = 0;
+            for(let i of backgroundQueue){
+                i.x = x
+                x += i.width;
+            }
         }
         function playSubd(url){
             soundPlayer.src = url;
@@ -244,17 +354,25 @@
             var blockQuantity = parseInt(RIGHT / BOTTOM_BLOCK_SIZE) + 2
             for(let x = 0; x < blockQuantity * BOTTOM_BLOCK_SIZE; x += BOTTOM_BLOCK_SIZE){
                 let b = new Floor(x, BOTTOM, BOTTOM_BLOCK_SIZE, BOTTOM_BLOCK_SIZE, {
-                    r: 255,
-                    g: 204,
+                    r: 128,
+                    g: 100,
                     b: 0
                 });
                 b.draw();
                 bottomBlocks.push(b);
             }
+            let x = 0;
+            for(let i of BACKGROUND){
+                let b = new Background(x, 0, i.width, i.height, i.url);
+                b.draw();
+                backgroundQueue.push(b);
+                x += i.width;
+            }
         }
 
         function draw() {
-            background(220);
+            backgroundQueue.forEach(i => i.draw());
+            background('rgba(255, 255, 255, 0.53)');
             bottomBlocks.forEach(i => i.draw());
             beastQueue.flatMap(i => i).forEach(i => i.draw());
             if(gameState != GAME_STATE.RUNING) {
@@ -265,7 +383,8 @@
                 return;
             }
             var dt = deltaTime / 1000;//毫秒轉秒
-            box.draw(deltaTime / 50)
+            box.draw(sec * 20)
+            sec += dt;
             
             if(t != -1){
                 box.y = TOP - parseInt(jump(t));
@@ -280,6 +399,8 @@
                 createBeast(beastQueue);
                 moveLengthCoume = 0;
             }
+            beastCaeateATime += dt / 80;
+            movebackground(dt, backgroundQueue);
             moveBottomBlock(dt, bottomBlocks);
             if(collisionCheck(beastQueue)){
                 console.log('撞');
