@@ -34,6 +34,7 @@
         ];
         const OVER_SOUND = [
             './sound/啊～哈.mp3',
+            './sound/啊～哈2.mp3',
             './sound/啊➚～～.mp3',
             './sound/啊➚～～2.mp3',
             './sound/啊～➚3.mp3',
@@ -64,7 +65,7 @@
         var gameState = GAME_STATE.STOP;
         
 
-        var cactusQueue = [];
+        var beastQueue = [];
         var moveLengthCoume;
         var p, box, gameBax, soundPlayer = new Audio();
         var sec;
@@ -87,6 +88,7 @@
             }
             draw(dt){
                 // fill(this.color.r, this.color.g, this.color.b);
+                console.debug(parseInt((this.dt + dt) % this.bodys.length))
                 image(this.heads[this.headIndex], this.x - 5, this.y - 15, this.width + 10, this.height * 0.33 + 15);
                 image(this.bodys[parseInt((this.dt += dt) % this.bodys.length)] ,this.x, this.y + this.height * 0.33, this.width, this.height * 0.66);
                 // image(this.images[parseInt((this.dt += dt) % 6)], this.x, this.y, this.width, this.height);
@@ -145,29 +147,25 @@
                 }
             }
         }
-        function moveAndRemoveBeast(dt, cactusQueue){
+        function moveAndRemoveBeast(dt, beastQueue){
             var distance = moveSec * dt;
-            if(
-                cactusQueue.length > 0
-                &&
-                (
-                    cactusQueue[0].length == 0 
-                    || 
-                    parseInt(cactusQueue[0][cactusQueue[0].length - 1].x) < -BEAST_WIDTH
-                )
-            ){
-                p.innerText = ++point;
-                playSubd(ADD_POINT);
-                cactusQueue.shift();
+            if(beastQueue.length > 0){
+                if(beastQueue[0].length == 0){
+                    beastQueue.shift();
+                }else if( parseInt(beastQueue[0][beastQueue[0].length - 1].x) < -BEAST_WIDTH){
+                    p.innerText = ++point;
+                    playSubd(ADD_POINT);
+                    beastQueue.shift();
+                }
             }
-            for(let i of cactusQueue){
+            for(let i of beastQueue){
                 for(let j of i){
                     j.x -= distance;
                 }
             }
             return distance;
         }
-        function createBeast(cactusQueue){
+        function createBeast(beastQueue){
             var beastList = [];
             var right = RIGHT;
             for(let i = 0; i < BEAST_CREATE_A_TIME; i++){
@@ -185,11 +183,11 @@
                 beast.draw();
                 beastList.push(beast);
             }
-            cactusQueue.push(beastList)
+            beastQueue.push(beastList)
         }
-        function collisionCheck(cactusQueue){
-            if(cactusQueue.length > 0)
-                for(let i of cactusQueue[0]){
+        function collisionCheck(beastQueue){
+            if(beastQueue.length > 0)
+                for(let i of beastQueue[0]){
                     if(
                         (box.x < (i.x + i.width) && (box.x + box.width) > i.x)
                         &&
@@ -216,7 +214,7 @@
 
         }
         function reset(){
-            cactusQueue = [];
+            beastQueue = [];
             moveLengthCoume = 0;
             sec = 0;
             t = -1;
@@ -258,7 +256,7 @@
         function draw() {
             background(220);
             bottomBlocks.forEach(i => i.draw());
-            cactusQueue.flatMap(i => i).forEach(i => i.draw());
+            beastQueue.flatMap(i => i).forEach(i => i.draw());
             if(gameState != GAME_STATE.RUNING) {
                 box.draw(0);
                 fill(0, 0, 0);
@@ -277,13 +275,13 @@
                     box.y = TOP;
                 }
             }
-            moveLengthCoume += moveAndRemoveBeast(dt, cactusQueue);
+            moveLengthCoume += moveAndRemoveBeast(dt, beastQueue);
             if(moveLengthCoume >= RIGHT / MAX_BEAST){
-                createBeast(cactusQueue);
+                createBeast(beastQueue);
                 moveLengthCoume = 0;
             }
             moveBottomBlock(dt, bottomBlocks);
-            if(collisionCheck(cactusQueue)){
+            if(collisionCheck(beastQueue)){
                 console.log('撞');
                 playSubd(OVER_SOUND[parseInt(random(0, OVER_SOUND.length))]);
                 box.headIndex = 1;
