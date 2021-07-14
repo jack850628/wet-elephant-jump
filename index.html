@@ -206,22 +206,39 @@
         (function(){
             var gameState = GAME_STATE.STOP;
             var beastQueue = [];
-            var moveLengthCoume;
-            var box, gameBax, soundPlayer = new Audio();
-            var sec;
-            var t;
-            var moveSec;
             var bottomBlocks = [];
             var backgroundQueue = [];
+            var soundPlayer = new Audio();
             var point = 0;
+            var moveLengthCoume;
+            var wetElephant;
+            var sec;
+            var jumpAfterTime;
+            var moveSec;
             var beastCaeateATime;
+            
+            function reset(){
+                beastQueue = [];
+                moveLengthCoume = 0;
+                sec = 0;
+                jumpAfterTime = -1;
+                moveSec = 420;
+                beastCaeateATime = 4;
+                point = 0;
+                wetElephant.headIndex = 0;
+                let x = 0;
+                for(let i of backgroundQueue){
+                    i.x = x;
+                    x += i.width;
+                }
+            }
 
             
             function getJumpX(time){
                 var y = -((time - JUMP_TIME / 2)**2);
                 y *= 1000;//將函數放大1000倍
                 y += 250;//當跳躍時間只有一秒時，第-0.5秒與0.5秒時的y座標等於-250
-                return y
+                return y;
             }
             function moveAndRemoveBeast(dt, beastQueue){
                 var distance = moveSec * dt;
@@ -266,9 +283,9 @@
                 if(beastQueue.length > 0)
                     for(let i of beastQueue[0]){
                         if(
-                            (box.x < (i.x + i.width) && (box.x + box.width) > i.x)
+                            (wetElephant.x < (i.x + i.width) && (wetElephant.x + wetElephant.width) > i.x)
                             &&
-                            (box.y + box.height) > i.y
+                            (wetElephant.y + wetElephant.height) > i.y
                         )return true;
                     }
                 return false;
@@ -302,21 +319,6 @@
                     }
                 }
             }
-            function reset(){
-                beastQueue = [];
-                moveLengthCoume = 0;
-                sec = 0;
-                t = -1;
-                moveSec = 420;
-                beastCaeateATime = 4;
-                point = 0;
-                box.headIndex = 0;
-                let x = 0;
-                for(let i of backgroundQueue){
-                    i.x = x
-                    x += i.width;
-                }
-            }
             function playSubd(url){
                 soundPlayer.src = url;
                 soundPlayer.play();
@@ -327,10 +329,10 @@
                         reset();
                         gameState = GAME_STATE.RUNING;
                         playSubd(START_SOUND[parseInt(random(0, START_SOUND.length))]);
-                        t = 0;
-                    }else if(t == -1){
+                        jumpAfterTime = 0;
+                    }else if(jumpAfterTime == -1){
                         playSubd(JUMP_SOUND[parseInt(random(0, JUMP_SOUND.length))]);
-                        t = 0;
+                        jumpAfterTime = 0;
                     }
                     console.log('跳');
                 }
@@ -349,12 +351,12 @@
 
             window.setup = function() {
                 createCanvas(RIGHT, BOTTOM + BOTTOM_BLOCK_SIZE).parent('p5-canvas');
-                box = new WetElephant(15, TOP, 50, 160, {
+                wetElephant = new WetElephant(15, TOP, 50, 160, {
                     r: 0,
                     g: 0,
                     b: 0
                 });
-                box.draw(0);
+                wetElephant.draw(0);
                 var blockQuantity = parseInt(RIGHT / BOTTOM_BLOCK_SIZE) + 2
                 for(let x = 0; x < blockQuantity * BOTTOM_BLOCK_SIZE; x += BOTTOM_BLOCK_SIZE){
                     let b = new Floor(x, BOTTOM, BOTTOM_BLOCK_SIZE, BOTTOM_BLOCK_SIZE, {
@@ -383,7 +385,7 @@
                 textSize(25);
                 text(`得分：${point}`, RIGHT / 2 - 25 * 6 / 2, 25);
                 if(gameState != GAME_STATE.RUNING) {
-                    box.draw(0);
+                    wetElephant.draw(0);
                     fill(0, 0, 0);
                     textSize(32);
                     textStyle(BOLD);
@@ -391,15 +393,15 @@
                     return;
                 }
                 var dt = deltaTime / 1000;//毫秒轉秒
-                box.draw(sec * 20)
+                wetElephant.draw(sec * 20);
                 sec += dt;
                 
-                if(t != -1){
-                    box.y = TOP - parseInt(getJumpX(t));
-                    t += dt;
-                    if(t > JUMP_TIME){
-                        t = -1;
-                        box.y = TOP;
+                if(jumpAfterTime != -1){
+                    wetElephant.y = TOP - parseInt(getJumpX(jumpAfterTime));
+                    jumpAfterTime += dt;
+                    if(jumpAfterTime > JUMP_TIME){
+                        jumpAfterTime = -1;
+                        wetElephant.y = TOP;
                     }
                 }
                 moveLengthCoume += moveAndRemoveBeast(dt, beastQueue);
@@ -413,7 +415,7 @@
                 if(collisionCheck(beastQueue)){
                     console.log('撞');
                     playSubd(OVER_SOUND[parseInt(random(0, OVER_SOUND.length))]);
-                    box.headIndex = 1;
+                    wetElephant.headIndex = 1;
                     gameState = GAME_STATE.RELOADING;
                     setTimeout(() => {
                         gameState = GAME_STATE.STOP;
@@ -421,7 +423,7 @@
                 }
                 moveSec += MOVE_SEC_A;
             }
-        })()
+        })();
     </script>
 </head>
 <body>
