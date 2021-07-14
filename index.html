@@ -139,20 +139,6 @@
             BEAST_HEAD_HEIGHT * 4
         ]
 
-        var gameState = GAME_STATE.STOP;
-        
-
-        var beastQueue = [];
-        var moveLengthCoume;
-        var p, box, gameBax, soundPlayer = new Audio();
-        var sec;
-        var t;
-        var moveSec;
-        var bottomBlocks = [];
-        var backgroundQueue = [];
-        var point;
-        var beastCaeateATime;
-
         class WetElephant{
             constructor(x, y, width, height, color){
                 this.x = x;
@@ -216,215 +202,229 @@
                     image(this.image, this.x, this.y, this.width, this.height);
             }
         }
-        function getJumpX(time){
-            var y = -((time - JUMP_TIME / 2)**2);
-            y *= 1000;//將函數放大1000倍
-            y += 250;//當跳躍時間只有一秒時，第-0.5秒與0.5秒時的y座標等於-250
-            return y
-        }
-        function moveAndRemoveBeast(dt, beastQueue){
-            var distance = moveSec * dt;
-            if(beastQueue.length > 0){
-                if(beastQueue[0].length == 0){
-                    beastQueue.shift();
-                }else if( parseInt(beastQueue[0][beastQueue[0].length - 1].x) < -BEAST_WIDTH){
-                    p.innerText = ++point;
-                    playSubd(ADD_POINT[parseInt(random(0, ADD_POINT.length))]);
-                    beastQueue.shift();
-                }
+
+        (function(){
+            var gameState = GAME_STATE.STOP;
+            var beastQueue = [];
+            var moveLengthCoume;
+            var box, gameBax, soundPlayer = new Audio();
+            var sec;
+            var t;
+            var moveSec;
+            var bottomBlocks = [];
+            var backgroundQueue = [];
+            var point = 0;
+            var beastCaeateATime;
+
+            
+            function getJumpX(time){
+                var y = -((time - JUMP_TIME / 2)**2);
+                y *= 1000;//將函數放大1000倍
+                y += 250;//當跳躍時間只有一秒時，第-0.5秒與0.5秒時的y座標等於-250
+                return y
             }
-            for(let i of beastQueue){
-                for(let j of i){
-                    j.x -= distance;
+            function moveAndRemoveBeast(dt, beastQueue){
+                var distance = moveSec * dt;
+                if(beastQueue.length > 0){
+                    if(beastQueue[0].length == 0){
+                        beastQueue.shift();
+                    }else if( parseInt(beastQueue[0][beastQueue[0].length - 1].x) < -BEAST_WIDTH){
+                        point++;
+                        playSubd(ADD_POINT[parseInt(random(0, ADD_POINT.length))]);
+                        beastQueue.shift();
+                    }
                 }
+                for(let i of beastQueue){
+                    for(let j of i){
+                        j.x -= distance;
+                    }
+                }
+                return distance;
             }
-            return distance;
-        }
-        function createBeast(beastQueue){
-            var beastList = [];
-            var right = RIGHT;
-            var quantity = Math.min(parseInt(beastCaeateATime), MAX_BEAST_CREATE_A_TIME);
-            for(let i = 0; i < quantity; i++){
-                if(parseInt(random(0 ,2))){
+            function createBeast(beastQueue){
+                var beastList = [];
+                var right = RIGHT;
+                var quantity = Math.min(parseInt(beastCaeateATime), MAX_BEAST_CREATE_A_TIME);
+                for(let i = 0; i < quantity; i++){
+                    if(parseInt(random(0 ,2))){
+                        right += BEAST_WIDTH;
+                        continue;
+                    }
+                    let height = BEAST_HEAD_HEIGHT_LIST[parseInt(random(0, BEAST_HEAD_HEIGHT_LIST.length))]
+                    let beast = new Beast(right, BOTTOM - height, BEAST_WIDTH, height, {
+                        r: 0,
+                        g: 128,
+                        b: 0
+                    });
                     right += BEAST_WIDTH;
-                    continue;
+                    beast.draw();
+                    beastList.push(beast);
                 }
-                let height = BEAST_HEAD_HEIGHT_LIST[parseInt(random(0, BEAST_HEAD_HEIGHT_LIST.length))]
-                let beast = new Beast(right, BOTTOM - height, BEAST_WIDTH, height, {
-                    r: 0,
-                    g: 128,
-                    b: 0
-                });
-                right += BEAST_WIDTH;
-                beast.draw();
-                beastList.push(beast);
+                beastQueue.push(beastList);
             }
-            beastQueue.push(beastList);
-        }
-        function collisionCheck(beastQueue){
-            if(beastQueue.length > 0)
-                for(let i of beastQueue[0]){
-                    if(
-                        (box.x < (i.x + i.width) && (box.x + box.width) > i.x)
-                        &&
-                        (box.y + box.height) > i.y
-                    )return true;
-                }
-            return false;
-        }
-        function random(start, end){
-            var height = end - start;
-            return Math.random() * height + start
-        }
-        function moveBottomBlock(dt, bottomBlock){
-            var distance = moveSec * dt;
-            if(bottomBlock[0].x + distance > -BOTTOM_BLOCK_SIZE){
-                for(let i of bottomBlock){
-                    i.x -= distance;
-                }
-            }else{
-                for(let i of bottomBlock){
-                    i.x = i.originX;
-                }
+            function collisionCheck(beastQueue){
+                if(beastQueue.length > 0)
+                    for(let i of beastQueue[0]){
+                        if(
+                            (box.x < (i.x + i.width) && (box.x + box.width) > i.x)
+                            &&
+                            (box.y + box.height) > i.y
+                        )return true;
+                    }
+                return false;
             }
-
-        }
-        function movebackground(dt, backgroundQueue){
-            var distance = (moveSec * dt) / 50;
-            for(let i = 0; i < backgroundQueue.length; i++){
-                if(backgroundQueue[i].x + backgroundQueue[i].width <= 0){
-                    let leftItemIndex = (i + backgroundQueue.length - 1) % backgroundQueue.length;
-                    console.log(leftItemIndex);
-                    backgroundQueue[i].x = backgroundQueue[leftItemIndex].x + backgroundQueue[leftItemIndex].width - distance;
+            function random(start, end){
+                var height = end - start;
+                return Math.random() * height + start
+            }
+            function moveBottomBlock(dt, bottomBlock){
+                var distance = moveSec * dt;
+                if(bottomBlock[0].x + distance > -BOTTOM_BLOCK_SIZE){
+                    for(let i of bottomBlock){
+                        i.x -= distance;
+                    }
                 }else{
-                    backgroundQueue[i].x -= distance;
+                    for(let i of bottomBlock){
+                        i.x = i.originX;
+                    }
+                }
+
+            }
+            function movebackground(dt, backgroundQueue){
+                var distance = (moveSec * dt) / 50;
+                for(let i = 0; i < backgroundQueue.length; i++){
+                    if(backgroundQueue[i].x + backgroundQueue[i].width <= 0){
+                        let leftItemIndex = (i + backgroundQueue.length - 1) % backgroundQueue.length;
+                        console.log(leftItemIndex);
+                        backgroundQueue[i].x = backgroundQueue[leftItemIndex].x + backgroundQueue[leftItemIndex].width - distance;
+                    }else{
+                        backgroundQueue[i].x -= distance;
+                    }
                 }
             }
-        }
-        function reset(){
-            beastQueue = [];
-            moveLengthCoume = 0;
-            sec = 0;
-            t = -1;
-            moveSec = 420;
-            beastCaeateATime = 4;
-            p.innerText = point = 0;
-            box.headIndex = 0;
-            let x = 0;
-            for(let i of backgroundQueue){
-                i.x = x
-                x += i.width;
-            }
-        }
-        function playSubd(url){
-            soundPlayer.src = url;
-            soundPlayer.play();
-        }
-        function jump(){
-            if(gameState != GAME_STATE.RELOADING){
-                if(gameState == GAME_STATE.STOP){
-                    reset();
-                    gameState = GAME_STATE.RUNING;
-                    playSubd(START_SOUND[parseInt(random(0, START_SOUND.length))]);
-                    t = 0;
-                }else if(t == -1){
-                    playSubd(JUMP_SOUND[parseInt(random(0, JUMP_SOUND.length))]);
-                    t = 0;
+            function reset(){
+                beastQueue = [];
+                moveLengthCoume = 0;
+                sec = 0;
+                t = -1;
+                moveSec = 420;
+                beastCaeateATime = 4;
+                point = 0;
+                box.headIndex = 0;
+                let x = 0;
+                for(let i of backgroundQueue){
+                    i.x = x
+                    x += i.width;
                 }
-                console.log('跳');
             }
-        }
-        window.onload = function(){
-            p = document.getElementById('time');
-            
-        }
-        document.addEventListener('keypress', function(e){
-            if(e.code == 'Space'){
-                jump();
+            function playSubd(url){
+                soundPlayer.src = url;
+                soundPlayer.play();
             }
-        });
-        document.addEventListener('mousedown', function(e){
-            if(e.button == 0){
-                jump();
+            function jump(){
+                if(gameState != GAME_STATE.RELOADING){
+                    if(gameState == GAME_STATE.STOP){
+                        reset();
+                        gameState = GAME_STATE.RUNING;
+                        playSubd(START_SOUND[parseInt(random(0, START_SOUND.length))]);
+                        t = 0;
+                    }else if(t == -1){
+                        playSubd(JUMP_SOUND[parseInt(random(0, JUMP_SOUND.length))]);
+                        t = 0;
+                    }
+                    console.log('跳');
+                }
             }
-        });
-
-
-        function setup() {
-            createCanvas(RIGHT, BOTTOM + BOTTOM_BLOCK_SIZE).parent('p5-canvas');
-            box = new WetElephant(15, TOP, 50, 160, {
-                r: 0,
-                g: 0,
-                b: 0
+            document.addEventListener('keypress', function(e){
+                if(e.code == 'Space'){
+                    jump();
+                }
             });
-            box.draw(0);
-            var blockQuantity = parseInt(RIGHT / BOTTOM_BLOCK_SIZE) + 2
-            for(let x = 0; x < blockQuantity * BOTTOM_BLOCK_SIZE; x += BOTTOM_BLOCK_SIZE){
-                let b = new Floor(x, BOTTOM, BOTTOM_BLOCK_SIZE, BOTTOM_BLOCK_SIZE, {
-                    r: 128,
-                    g: 100,
+            document.addEventListener('mousedown', function(e){
+                if(e.button == 0){
+                    jump();
+                }
+            });
+
+
+            window.setup = function() {
+                createCanvas(RIGHT, BOTTOM + BOTTOM_BLOCK_SIZE).parent('p5-canvas');
+                box = new WetElephant(15, TOP, 50, 160, {
+                    r: 0,
+                    g: 0,
                     b: 0
                 });
-                b.draw();
-                bottomBlocks.push(b);
-            }
-            let x = 0;
-            for(let i of BACKGROUND){
-                let b = new Background(x, 0, i.width, i.height, i.url);
-                b.draw();
-                backgroundQueue.push(b);
-                x += i.width;
-            }
-        }
-
-        function draw() {
-            backgroundQueue.forEach(i => i.draw());
-            background('rgba(255, 255, 255, 0.53)');
-            bottomBlocks.forEach(i => i.draw());
-            beastQueue.flatMap(i => i).forEach(i => i.draw());
-            if(gameState != GAME_STATE.RUNING) {
                 box.draw(0);
-                fill(0, 0, 0);
-                textSize(32);
-                textStyle(BOLD);
-                text('按空白鍵或點擊畫面任意地方開始', RIGHT / 2 - 32 * 15 / 2, BOTTOM / 2);
-                return;
-            }
-            var dt = deltaTime / 1000;//毫秒轉秒
-            box.draw(sec * 20)
-            sec += dt;
-            
-            if(t != -1){
-                box.y = TOP - parseInt(getJumpX(t));
-                t += dt;
-                if(t > JUMP_TIME){
-                    t = -1;
-                    box.y = TOP;
+                var blockQuantity = parseInt(RIGHT / BOTTOM_BLOCK_SIZE) + 2
+                for(let x = 0; x < blockQuantity * BOTTOM_BLOCK_SIZE; x += BOTTOM_BLOCK_SIZE){
+                    let b = new Floor(x, BOTTOM, BOTTOM_BLOCK_SIZE, BOTTOM_BLOCK_SIZE, {
+                        r: 128,
+                        g: 100,
+                        b: 0
+                    });
+                    b.draw();
+                    bottomBlocks.push(b);
+                }
+                let x = 0;
+                for(let i of BACKGROUND){
+                    let b = new Background(x, 0, i.width, i.height, i.url);
+                    b.draw();
+                    backgroundQueue.push(b);
+                    x += i.width;
                 }
             }
-            moveLengthCoume += moveAndRemoveBeast(dt, beastQueue);
-            if(moveLengthCoume >= RIGHT / MAX_BEAST){
-                createBeast(beastQueue);
-                moveLengthCoume = 0;
+
+            window.draw = function() {
+                backgroundQueue.forEach(i => i.draw());
+                background('rgba(255, 255, 255, 0.53)');
+                bottomBlocks.forEach(i => i.draw());
+                beastQueue.flatMap(i => i).forEach(i => i.draw());
+                fill(0, 0, 0);
+                textSize(25);
+                text(`得分：${point}`, RIGHT / 2 - 25 * 6 / 2, 25);
+                if(gameState != GAME_STATE.RUNING) {
+                    box.draw(0);
+                    fill(0, 0, 0);
+                    textSize(32);
+                    textStyle(BOLD);
+                    text('按空白鍵或點擊畫面任意地方開始', RIGHT / 2 - 32 * 15 / 2, BOTTOM / 2);
+                    return;
+                }
+                var dt = deltaTime / 1000;//毫秒轉秒
+                box.draw(sec * 20)
+                sec += dt;
+                
+                if(t != -1){
+                    box.y = TOP - parseInt(getJumpX(t));
+                    t += dt;
+                    if(t > JUMP_TIME){
+                        t = -1;
+                        box.y = TOP;
+                    }
+                }
+                moveLengthCoume += moveAndRemoveBeast(dt, beastQueue);
+                if(moveLengthCoume >= RIGHT / MAX_BEAST){
+                    createBeast(beastQueue);
+                    moveLengthCoume = 0;
+                }
+                beastCaeateATime += dt / 80;
+                movebackground(dt, backgroundQueue);
+                moveBottomBlock(dt, bottomBlocks);
+                if(collisionCheck(beastQueue)){
+                    console.log('撞');
+                    playSubd(OVER_SOUND[parseInt(random(0, OVER_SOUND.length))]);
+                    box.headIndex = 1;
+                    gameState = GAME_STATE.RELOADING;
+                    setTimeout(() => {
+                        gameState = GAME_STATE.STOP;
+                    }, 1000);
+                }
+                moveSec += MOVE_SEC_A;
             }
-            beastCaeateATime += dt / 80;
-            movebackground(dt, backgroundQueue);
-            moveBottomBlock(dt, bottomBlocks);
-            if(collisionCheck(beastQueue)){
-                console.log('撞');
-                playSubd(OVER_SOUND[parseInt(random(0, OVER_SOUND.length))]);
-                box.headIndex = 1;
-                gameState = GAME_STATE.RELOADING;
-                setTimeout(() => {
-                    gameState = GAME_STATE.STOP;
-                }, 1000);
-            }
-            moveSec += MOVE_SEC_A;
-        }
+        })()
     </script>
 </head>
 <body>
-    <span style="font-size: 25px;">得分：<span id="time">0</span></span>
     <div id="p5-canvas"></div>
     <span style="font-size: 25px;">按下空白鍵或點擊畫面任意地方，讓元元越過野獸先輩們吧！</span>
 </body>
