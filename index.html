@@ -216,27 +216,11 @@
                     image(this.image, this.x, this.y, this.width, this.height);
             }
         }
-        function jump(time){
+        function getJumpX(time){
             var y = -((time - JUMP_TIME / 2)**2);
             y *= 1000;//將函數放大1000倍
             y += 250;//當跳躍時間只有一秒時，第-0.5秒與0.5秒時的y座標等於-250
             return y
-        }
-        function onKeypress(e){
-            if(e.code == 'Space'){
-                if(gameState != GAME_STATE.RELOADING){
-                    if(gameState == GAME_STATE.STOP){
-                        reset();
-                        gameState = GAME_STATE.RUNING;
-                        playSubd(START_SOUND[parseInt(random(0, START_SOUND.length))]);
-                        t = 0;
-                    }else if(t == -1){
-                        playSubd(JUMP_SOUND[parseInt(random(0, JUMP_SOUND.length))]);
-                        t = 0;
-                    }
-                    console.log('跳');
-                }
-            }
         }
         function moveAndRemoveBeast(dt, beastQueue){
             var distance = moveSec * dt;
@@ -336,11 +320,34 @@
             soundPlayer.src = url;
             soundPlayer.play();
         }
+        function jump(){
+            if(gameState != GAME_STATE.RELOADING){
+                if(gameState == GAME_STATE.STOP){
+                    reset();
+                    gameState = GAME_STATE.RUNING;
+                    playSubd(START_SOUND[parseInt(random(0, START_SOUND.length))]);
+                    t = 0;
+                }else if(t == -1){
+                    playSubd(JUMP_SOUND[parseInt(random(0, JUMP_SOUND.length))]);
+                    t = 0;
+                }
+                console.log('跳');
+            }
+        }
         window.onload = function(){
             p = document.getElementById('time');
             
         }
-        document.addEventListener('keypress', onKeypress);
+        document.addEventListener('keypress', function(e){
+            if(e.code == 'Space'){
+                jump();
+            }
+        });
+        document.addEventListener('mousedown', function(e){
+            if(e.button == 0){
+                jump();
+            }
+        });
 
 
         function setup() {
@@ -379,7 +386,8 @@
                 box.draw(0);
                 fill(0, 0, 0);
                 textSize(32);
-                text('按空白鍵開始', RIGHT / 2 - 32 * 6 / 2, BOTTOM / 2);
+                textStyle(BOLD);
+                text('按空白鍵或點擊畫面任意地方開始', RIGHT / 2 - 32 * 15 / 2, BOTTOM / 2);
                 return;
             }
             var dt = deltaTime / 1000;//毫秒轉秒
@@ -387,7 +395,7 @@
             sec += dt;
             
             if(t != -1){
-                box.y = TOP - parseInt(jump(t));
+                box.y = TOP - parseInt(getJumpX(t));
                 t += dt;
                 if(t > JUMP_TIME){
                     t = -1;
@@ -418,6 +426,6 @@
 <body>
     <span style="font-size: 25px;">得分：<span id="time">0</span></span>
     <div id="p5-canvas"></div>
-    <span style="font-size: 25px;">按下空白鍵，讓元元越過野獸先輩們吧！</span>
+    <span style="font-size: 25px;">按下空白鍵或點擊畫面任意地方，讓元元越過野獸先輩們吧！</span>
 </body>
 </html>
