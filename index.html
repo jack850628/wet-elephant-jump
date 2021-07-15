@@ -9,6 +9,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            margin: 0px;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.js"></script>
@@ -350,7 +351,10 @@
 
 
             window.setup = function() {
-                createCanvas(RIGHT, BOTTOM + BOTTOM_BLOCK_SIZE).parent('p5-canvas');
+                createCanvas(RIGHT, BOTTOM + BOTTOM_BLOCK_SIZE)
+                    .parent('p5-canvas')
+                    .style('width', '100%')
+                    .style('height', 'auto');
                 wetElephant = new WetElephant(15, TOP, 50, 160, {
                     r: 0,
                     g: 0,
