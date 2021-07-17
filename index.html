@@ -270,7 +270,7 @@
             var jumpAfterTime;
             var moveSec;
             var beastCaeateATime;//一次要建立幾排野獸
-             vueObj = null
+            var vueObj = null
             var playerData;
             
             function reset(){
@@ -581,6 +581,9 @@
                 // })
             };
             window.onSignIn = function(googleUser){
+                if(vueObj.$data.playerData != null){//防止一個帳號的最高分數繼承到另一個帳號上
+                    localStorage.removeItem('point');
+                }
                 vueObj.$data.playerData = parseJwt(googleUser.credential);
                 vueObj.updateLeaderboardMaxPoint();
             }
