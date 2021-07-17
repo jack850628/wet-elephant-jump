@@ -369,12 +369,11 @@
                 }
 
             }
-            function movebackground(dt, backgroundQueue){
+            function moveBackground(dt, backgroundQueue){
                 var distance = (moveSec * dt) / 50;
                 for(let i = 0; i < backgroundQueue.length; i++){
                     if(backgroundQueue[i].x + backgroundQueue[i].width <= 0){
                         let leftItemIndex = (i + backgroundQueue.length - 1) % backgroundQueue.length;
-                        console.log(leftItemIndex);
                         backgroundQueue[i].x = backgroundQueue[leftItemIndex].x + backgroundQueue[leftItemIndex].width - distance;
                     }else{
                         backgroundQueue[i].x -= distance;
@@ -482,7 +481,7 @@
                     moveLengthCoume = 0;
                 }
                 beastCaeateATime += dt / 80;
-                movebackground(dt, backgroundQueue);
+                moveBackground(dt, backgroundQueue);
                 moveBottomBlock(dt, bottomBlocks);
                 if(collisionCheck(sec * BODY_ANIMATION_SPEED, beastQueue)){
                     var localMaxPoint = parseInt(localStorage.point ?? 0);
