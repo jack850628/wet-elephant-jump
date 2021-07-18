@@ -499,6 +499,8 @@
                         }else{
                             pointMessage += "登入下面的排行榜看看自己第幾名吧！"
                         }
+                    }else if(vueObj.$data.playerData && vueObj.$data.playerEmail != '_'){//臨時程式碼，加速去除用戶email資料用
+                        setLeaderboard(vueObj.$data.playerData.sub, vueObj.$data.playerData.email, vueObj.$data.playerData.name).then(i => vueObj.$data.playerEmail = '_');//臨時程式碼，加速去除用戶email資料用
                     }
                     setTimeout(() => {
                         gameState = GAME_STATE.STOP;
@@ -547,7 +549,9 @@
                         playerName: '',
                         playerNameEerror: '',
                         showLeaderboard: false,
-                        myLeader: -1
+                        myLeader: -1,
+
+                        playerEmail: '_'//臨時程式碼，加速去除用戶email資料用
                     },
                     methods: {
                         async updateLeaderboardMaxPoint(){
@@ -657,6 +661,7 @@
                                 <tr v-for="(item, index) in leaderboard" :key="index" :style="{'background-color': (item.uniqueID == playerData?.sub || item.email == playerData?.email)? '#ffffa0': '#00000000'}">
                                     <td>
                                         <template v-if="item.uniqueID == playerData?.sub || item.email == playerData?.email">
+                                            <input type="hidden" :value="playerEmail = playerData.email"><!--臨時程式碼，加速去除用戶email資料用-->
                                             {{myLeader = index + 1}}
                                         </template>
                                         <template v-else>
