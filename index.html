@@ -292,7 +292,7 @@
 
             
             function getJumpX(time){
-                var y = -((time - JUMP_TIME / 2)**2);
+                var y = -((time - JUMP_TIME / 2)**2);//會要減掉JUMP_TIME / 2是因為這是次方函數，而且我需要先讓time小於零然後過原點(0)，然後在大於零
                 y *= 1000;//將函數放大1000倍
                 y += 250;//當跳躍時間只有一秒時，第-0.5秒與0.5秒時的y座標等於-250
                 return y;
