@@ -27,7 +27,7 @@
         const TOP = 460, JUMP_TIME = 1;
         const LEFT = 0, RIGHT = 1300, MAX_BEAST = 1, BEAST_WIDTH = 45, MAX_BEAST_CREATE_A_TIME = 12;
         const BOTTOM = 620;
-        const MOVE_SEC_A = 0.03;
+        const MOVE_DISTANCE_ADD_FOR_A_SEC = 0.03;
         const BOTTOM_BLOCK_SIZE = 40;
         const POINT_STRING_SIZE = 25;
         const BODY_ANIMATION_SPEED = 20;//每秒20倍
@@ -268,7 +268,7 @@
             var wetElephant;
             var sec;
             var jumpAfterTime;
-            var moveSec;
+            var moveDistanceForASec;
             var beastCaeateATime;//一次要建立幾排野獸
             var vueObj = null
             var playerData;
@@ -278,7 +278,7 @@
                 moveLengthCoume = 0;
                 sec = 0;
                 jumpAfterTime = -1;
-                moveSec = 420;
+                moveDistanceForASec = 420;
                 beastCaeateATime = 4;
                 point = 0;
                 wetElephant.headIndex = 0;
@@ -298,7 +298,7 @@
                 return y;
             }
             function moveAndRemoveBeast(dt, beastQueue){
-                var distance = moveSec * dt;
+                var distance = moveDistanceForASec * dt;
                 if(beastQueue.length > 0){
                     if(beastQueue[0].length == 0){
                         beastQueue.shift();
@@ -357,7 +357,7 @@
                 return Math.random() * height + start
             }
             function moveBottomBlock(dt, bottomBlock){
-                var distance = moveSec * dt;
+                var distance = moveDistanceForASec * dt;
                 if(bottomBlock[0].x + distance > -BOTTOM_BLOCK_SIZE){
                     for(let i of bottomBlock){
                         i.x -= distance;
@@ -370,7 +370,7 @@
 
             }
             function moveBackground(dt, backgroundQueue){
-                var distance = (moveSec * dt) / 50;
+                var distance = (moveDistanceForASec * dt) / 50;
                 for(let i = 0; i < backgroundQueue.length; i++){
                     if(backgroundQueue[i].x + backgroundQueue[i].width <= 0){
                         let leftItemIndex = (i + backgroundQueue.length - 1) % backgroundQueue.length;
@@ -506,7 +506,7 @@
                         gameState = GAME_STATE.STOP;
                     }, 1000);
                 }
-                moveSec += MOVE_SEC_A;
+                moveDistanceForASec += MOVE_DISTANCE_ADD_FOR_A_SEC;
             };
 
 
