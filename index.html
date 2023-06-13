@@ -264,22 +264,22 @@
             var backgroundQueue = [];
             var soundPlayer = new Audio();
             var point = 0, pointMessage = '';
-            var moveLengthCoume;
+            var moveLengthCount;
             var wetElephant;
-            var sec;
+            var sec = 0;
             var jumpAfterTime;
             var moveDistanceForASec;
-            var beastCaeateATime;//一次要建立幾排野獸
+            var beastCreateATime;//一次要建立幾排野獸
             var vueObj = null
             var playerData;
             
             function reset(){
                 beastQueue = [];
-                moveLengthCoume = 0;
+                moveLengthCount = 0;
                 sec = 0;
                 jumpAfterTime = -1;
                 moveDistanceForASec = 420;
-                beastCaeateATime = 4;
+                beastCreateATime = 4;
                 point = 0;
                 wetElephant.headIndex = 0;
                 pointMessage = '';
@@ -302,7 +302,7 @@
                 if(beastQueue.length > 0){
                     if(beastQueue[0].length == 0){
                         beastQueue.shift();
-                    }else if( parseInt(beastQueue[0][beastQueue[0].length - 1].x) < -BEAST_WIDTH){
+                    }else if(parseInt(beastQueue[0][beastQueue[0].length - 1].x) < -BEAST_WIDTH){
                         point++;
                         playSubd(ADD_POINT[parseInt(random(0, ADD_POINT.length))]);
                         beastQueue.shift();
@@ -318,7 +318,7 @@
             function createBeast(beastQueue){
                 var beastList = [];
                 var right = RIGHT;
-                var quantity = Math.min(parseInt(beastCaeateATime), MAX_BEAST_CREATE_A_TIME);
+                var quantity = Math.min(parseInt(beastCreateATime), MAX_BEAST_CREATE_A_TIME);
                 for(let i = 0; i < quantity; i++){
                     if(parseInt(random(0 ,2))){
                         right += BEAST_WIDTH;
@@ -447,7 +447,6 @@
                 fill('rgba(255, 255, 255, 0.53)');
                 rect(0, 0, RIGHT, BOTTOM);
                 bottomBlocks.forEach(i => i.draw());
-                beastQueue.flatMap(i => i).forEach(i => i.draw());
                 fill(0, 0, 0);
                 textSize(POINT_STRING_SIZE);
                 let pointStr = `得分：${point}`
@@ -456,16 +455,18 @@
                 textSize(POINT_STRING_SIZE);
                 text(pointMessage, RIGHT / 2 + POINT_STRING_SIZE * pointStr.length / 2, POINT_STRING_SIZE);
                 if(gameState != GAME_STATE.RUNING) {
-                    wetElephant.draw(0);
+                    wetElephant.draw(sec * BODY_ANIMATION_SPEED);
+                    beastQueue.flatMap(i => i).forEach(i => i.draw());
                     fill(0, 0, 0);
                     textSize(32);
                     textStyle(BOLD);
                     text('按空白鍵或點擊遊戲畫面開始', RIGHT / 2 - 32 * 13 / 2, BOTTOM / 2);
                     return;
                 }
+
                 var dt = deltaTime / 1000;//毫秒轉秒
-                wetElephant.draw(sec * BODY_ANIMATION_SPEED);
                 sec += dt;
+                wetElephant.draw(sec * BODY_ANIMATION_SPEED);
                 
                 if(jumpAfterTime != -1){
                     wetElephant.y = TOP - parseInt(getJumpX(jumpAfterTime));
@@ -475,14 +476,19 @@
                         wetElephant.y = TOP;
                     }
                 }
-                moveLengthCoume += moveAndRemoveBeast(dt, beastQueue);
-                if(moveLengthCoume >= RIGHT / MAX_BEAST){
+
+                moveLengthCount += moveAndRemoveBeast(dt, beastQueue);
+                if(moveLengthCount >= RIGHT / MAX_BEAST){
                     createBeast(beastQueue);
-                    moveLengthCoume = 0;
+                    moveLengthCount = 0;
                 }
-                beastCaeateATime += dt / 80;
+                beastQueue.flatMap(i => i).forEach(i => i.draw());
+                beastCreateATime += dt / 80;
+
                 moveBackground(dt, backgroundQueue);
+
                 moveBottomBlock(dt, bottomBlocks);
+
                 if(collisionCheck(sec * BODY_ANIMATION_SPEED, beastQueue)){
                     var localMaxPoint = parseInt(localStorage.point ?? 0);
                     console.log('撞');
@@ -506,6 +512,7 @@
                         gameState = GAME_STATE.STOP;
                     }, 1000);
                 }
+
                 moveDistanceForASec += MOVE_DISTANCE_ADD_FOR_A_SEC;
             };
 
